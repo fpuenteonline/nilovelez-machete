@@ -76,9 +76,41 @@ $machete_optimize_array = array(
 		'title' => __('remove jQuery-migrate','machete'),
 		'description' => __('jQuery-migrate provides diagnostics that can simplify upgrading to new versions of jQuery, you can safely disable it.','machete')
 	),
+	'oembed_scripts' => array(
+		'title' => __('Remove oEmbed Scripts','machete'),
+		'description' => __('Since WordPress 4.4, oEmbed is installed and available by default. If you don’t need oEmbed, you can remove it.','machete')
+	),
+	'slow_heartbeat' => array(
+		'title' => __('Slow Heartbeat','machete'),
+		'description' => __('By default, heartbeat makes a post call every 15 seconds on post edit pages. Change to 30 seconds (less CPU usage).','machete')
+	),	
+	'comments_reply_feature' => array(
+		'title' => __('JS Comment reply','machete'),
+		'description' => __('Load the comment-reply JS file only when needed.','machete')
+	),
+	'empty_trash_soon' => array(
+		'title' => __('Empty trash every week','machete'),
+		'description' => __('You can shorten the time posts are kept in the trash, which is 30 days by default, to 1 week.','machete')
+	),
+	
 );
 
+$machete_hard_optimize_array = array(
+	'move_script_footer' => array(
+		'title' => __('Move scripts to footer','machete'),
+		'description' => __('Move all JS queued scripts from header to footer. Machete will de-register the call for the JavaScript to load in the HEAD section of the site and re-register it to the FOOTER.','machete')
+	),	
+	'defer_all_script' => array(
+		'title' => __('Defer your JavaScript','machete'),
+		'description' => __('The defer attribute also downloads the JS file during HTML parsing, but it only executes it after the parsing has completed. Executed in order of appearance on the page','machete')
+	),	
+);
+
+
+
 $machete_all_optimize_checked = (count(array_intersect(array_keys($machete_optimize_array), $machete_cleanup_settings)) == count($machete_optimize_array)) ? true : false;
+
+$machete_all_hard_optimize_checked = (count(array_intersect(array_keys($machete_hard_optimize_array), $machete_cleanup_settings)) == count($machete_hard_optimize_array)) ? true : false;
 
 $machete_all_cleanup_checked = (count(array_intersect(array_keys($machete_cleanup_array), $machete_cleanup_settings)) == count($machete_cleanup_array)) ? true : false;
 ?>
@@ -125,8 +157,6 @@ $machete_all_cleanup_checked = (count(array_intersect(array_keys($machete_cleanu
 
 		<p><?php _e('This section goes futher disabling optional features. All options can be safely activated, but keep an eye on potiential plugin compatibility issues.','machete') ?></p>
 
-
-
 		<table class="wp-list-table widefat fixed striped posts machete-options-table machete-optimize-table">
 		<thead>
 			<tr>
@@ -147,6 +177,32 @@ $machete_all_cleanup_checked = (count(array_intersect(array_keys($machete_cleanu
 
 		</tbody>
 		</table>
+
+		<h3><?php _e('Hard Optimization Tweaks','machete') ?></h3>
+
+		<p><?php _e('Take care of this section. Test and be careful. Keep two eyes on potiential plugin & theme compatibility issues.','machete') ?></p>
+
+		<table class="wp-list-table widefat fixed striped posts machete-options-table machete-hard-optimize-table">
+		<thead>
+			<tr>
+				<td class="manage-column column-cb check-column " ><input type="checkbox" name="check_all" id="machete_hard_optimize_checkall_fld" <?php if ($machete_all_hard_optimize_checked) echo 'checked' ?>></td>
+				<th class="column-title"><?php _e('Remove','machete') ?></th>
+				<th><?php _e('Explanation','machete') ?></th>
+			</tr>
+		</thead>
+		<tbody>
+		<?php foreach($machete_hard_optimize_array as $option_slug => $option){ ?>
+			<tr>
+				<td><input type="checkbox" name="optionEnabled[]" value="<?php echo $option_slug ?>" id="<?php echo $option_slug ?>_fld" <?php if (in_array($option_slug, $machete_cleanup_settings)) echo 'checked' ?>></td>
+				<td class="column-title column-primary"><strong><?php echo $option['title'] ?></strong></td>
+				<td><?php echo $option['description'] ?></td>
+			</tr>
+
+		<?php } ?>
+
+		</tbody>
+		</table>
+		
 		<?php submit_button(); ?>
 		</form>
 
@@ -203,6 +259,27 @@ $machete_all_cleanup_checked = (count(array_intersect(array_keys($machete_cleanu
 	    }
 	});
 
+	$('#machete-cleanup-options .machete-hard-optimize-table :checkbox').change(function() {
+	    // this will contain a reference to the checkbox
+	    console.log(this.id); 
+	    var checkBoxes = $("#machete-cleanup-options .machete-hard-optimize-table input[name=optionEnabled\\[\\]]");
+
+	    if (this.id == 'machete_hard_optimize_checkall_fld'){
+			if (this.checked) {
+				checkBoxes.prop("checked", true);
+			} else {
+				checkBoxes.prop("checked", false);
+				// the checkbox is now no longer checked
+			}
+	    }else{
+	    	var checkBoxes_checked = $("#machete-cleanup-options .machete-hard-optimize-table input[name=optionEnabled\\[\\]]:checked");
+	    	if(checkBoxes_checked.length == checkBoxes.length){
+	    		$('#machete_hard_optimize_checkall_fld').prop("checked", true);
+	    	}else{
+	    		$('#machete_hard_optimize_checkall_fld').prop("checked", false);
+	    	}
+	    }
+	});
 
 })(jQuery);
 </script>

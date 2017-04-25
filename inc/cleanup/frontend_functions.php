@@ -19,7 +19,13 @@ function machete_optimize($settings){
   'json_api',
   'wp_resource_hints',
   'recentcomments',
-  'xmlrpc');*/
+  'xmlrpc',
+  'oembed_scripts',
+  'slow_heartbeat',
+  'comments_reply_feature',
+  'empty_trash_soon',
+  'move_script_footer',
+  'defer_all_script');*/
 
   if (empty($settings)){
     return false;
@@ -146,6 +152,70 @@ function machete_optimize($settings){
     }
   }
 
+  //Remove oEmbed Scripts
+  //Since WordPress 4.4, oEmbed is installed and available by default. WordPress assumes you’ll want to easily embed media like tweets and YouTube videos so includes the scripts as standard. If you don’t need oEmbed, you can remove it
+  if (in_array('oembed_scripts',$settings)) {
+	add_action('init', 'machete_deregister_wp_embed');
+	function machete_deregister_wp_embed() {
+		if (!is_admin()) {
+			wp_deregister_script('wp-embed');
+		}
+	}
+  }
+  
+  //Slow default heartbeat
+  if (in_array('slow_heartbeat',$settings)) {
+	add_filter( 'heartbeat_settings', 'machete_slow_heartbeat' );
+	function machete_slow_heartbeat( $settings ) {
+		$settings['interval'] = 30; 
+		return $settings;
+	}
+  }
+  
+  //Only load the comment-reply.js when needed
+  if (in_array('comments_reply_feature',$settings)) {
+	function machete_queue_comment_reply(){
+		if (!is_admin()){
+			if (is_singular() && (get_option('thread_comments') == 1) && comments_open() && have_comments())
+				wp_enqueue_script('comment-reply');
+			else
+				wp_dequeue_script('comment-reply');
+		}
+	}
+	add_action('wp_print_scripts', 'machete_queue_comment_reply', 100);
+  }
+
+	// Script to Move JavaScript from the Head to the Footer
+  if (in_array('move_script_footer',$settings)) {
+	function machete_remove_head_scripts() { 
+	   remove_action('wp_head', 'wp_print_scripts'); 
+	   remove_action('wp_head', 'wp_print_head_scripts', 9); 
+	   remove_action('wp_head', 'wp_enqueue_scripts', 1);
+
+	   add_action('wp_footer', 'wp_print_scripts', 5);
+	   add_action('wp_footer', 'wp_enqueue_scripts', 5);
+	   add_action('wp_footer', 'wp_print_head_scripts', 5); 
+	} 
+	add_action( 'wp_enqueue_scripts', 'machete_remove_head_scripts' );
+  }
+ 
+  //Remove old posts	
+  if (in_array('empty_trash_soon',$machete_cleanup_settings)) {
+    if ( defined('EMPTY_TRASH_DAYS') && (EMPTY_TRASH_DAYS != false)) {
+      define('EMPTY_TRASH_DAYS', 7);
+    }
+  }
+
+  //Defer all JS
+  if (in_array('defer_all_script',$machete_cleanup_settings)) {
+	function machete_js_defer_attr($tag){
+		return str_replace( ' src', ' defer="defer" src', $tag );
+	}
+	add_filter( 'script_loader_tag', 'machete_js_defer_attr', 10 );
+  }
+  
+  
+  
   // pdf_thumbnails está en machete_admin.php
   // limit_revisions está en machete_admin.php
 
